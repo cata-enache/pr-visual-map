@@ -9,7 +9,8 @@ matters. Every block points to files and lines; anything an agent concluded rath
 - **Picture first:** at most 12 blocks per level, laid out Entry → Logic → Data → Infra with a tests lane; groups open on click.
 - **Risk where it is:** rule flags (auth, public routes, secrets, IAM, migrations, large edits, untested code), the blast radius
   (unchanged code that calls what changed) and a numbered review path with 2–4 must-read blocks.
-- **Drill down:** block → files → diff hunks, with "Mark reviewed" and "Copy question for agent".
+- **Drill down:** block → files → diff hunks, with "Mark reviewed" and "Copy question for agent". Uses the full
+  window width; details sit below the map (or beside it, one click).
 - **Offline and honest:** one self-contained file, zero network requests, self-checks that refuse to publish a wrong map.
 
 ## How it works

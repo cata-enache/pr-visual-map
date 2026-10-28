@@ -14,7 +14,7 @@
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html{background:var(--bg)}
-body{margin:0 auto;max-width:1560px;padding:16px 24px 40px;color:var(--text);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+body{margin:0 auto;max-width:none;padding:16px 28px 40px;color:var(--text);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
 button{font:inherit;color:inherit}
 header{display:flex;gap:16px;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
 h1{margin:0;font-size:21px;line-height:1.3}
@@ -26,7 +26,8 @@ h1{margin:0;font-size:21px;line-height:1.3}
 .btn[aria-pressed=true]{background:var(--chip);border-color:var(--muted)}
 .headline{margin:0 0 12px;padding:9px 14px;border-left:4px solid var(--mod);background:var(--panel);border-radius:0 10px 10px 0;font-size:16px}
 .headline.draft{border:1px dashed var(--muted);border-left:4px dashed var(--muted);color:var(--muted)}
-.grid{display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:16px;align-items:start}
+.grid{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start}
+body.side .grid{grid-template-columns:minmax(0,1fr) clamp(440px,36vw,780px)}
 .canvas{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px 10px 10px;min-width:0}
 .bar{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:2px 4px 6px;font-size:14px;color:var(--muted)}
 .crumbs button{background:none;border:0;padding:0;cursor:pointer;color:var(--mod);font-size:14px}
@@ -65,7 +66,13 @@ svg{display:block}
 .edge.dim{opacity:.18}
 .ahead{fill:var(--edge)}
 .ahead.hot{fill:var(--text)}
-#panel{overflow-wrap:anywhere;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 18px 18px;position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}
+#panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 18px 18px;}
+body.side #panel{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}
+body.below #panel{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:0 40px;align-items:start;padding:16px 24px 24px}
+body.below #panel .phead{grid-column:1/-1}
+body.below .hunks{max-height:70vh}
+#panel p,#panel li,.lead{overflow-wrap:anywhere}
+.sev,.tag,.btn,.st,.num{white-space:nowrap;overflow-wrap:normal}
 #panel h2{margin:0 0 4px;font-size:19px;line-height:1.3}
 #panel h3{margin:16px 0 6px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 #panel p{margin:6px 0}
@@ -82,7 +89,8 @@ svg{display:block}
 .ev{display:inline-block;margin:2px 4px 0 0;padding:0 7px;border:1px solid var(--line);border-radius:6px;background:var(--chip);font:12.5px ui-monospace,SFMono-Regular,Menlo,monospace;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom}
 .ev:hover{border-color:var(--muted)}
 .risk{list-style:none;padding:0!important}
-.risk li{display:grid;grid-template-columns:auto 1fr;gap:2px 8px;align-items:baseline}
+.risk li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 8px;align-items:baseline}
+.risk li>span{min-width:0}
 .sev{font-size:12px;font-weight:800;letter-spacing:.05em;padding:0 6px;border-radius:5px;border:1px solid var(--line)}
 .sev.high{background:var(--text);color:var(--bg)}
 .sev.low{color:var(--muted)}
@@ -109,11 +117,12 @@ pre.diff i{display:inline-block;width:3.6em;padding-right:.6em;text-align:right;
 .check{color:var(--add)}.cross{color:var(--del)}
 #close{display:none;float:right}
 textarea.copy{width:100%;height:140px;font:12px ui-monospace,Menlo,monospace;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:8px}
-@media (max-width:1180px){
- .grid{grid-template-columns:1fr}
- #panel{position:static;max-height:none}
- body.has-sel #panel{position:fixed;top:0;right:0;bottom:0;width:min(460px,94vw);max-height:none;z-index:5;border-radius:0;box-shadow:-14px 0 30px rgba(0,0,0,.35)}
- body.has-sel #close{display:inline-block}
+@media (max-width:1100px){
+ body.side .grid{grid-template-columns:1fr}
+ body.below #panel{grid-template-columns:minmax(0,1fr)}
+ body.side #panel{position:static;max-height:none}
+ body.side.has-sel #panel{position:fixed;top:0;right:0;bottom:0;width:min(460px,94vw);max-height:none;z-index:5;border-radius:0;box-shadow:-14px 0 30px rgba(0,0,0,.35)}
+ body.side.has-sel #close{display:inline-block}
 }
 </style>
 </head>
@@ -123,7 +132,7 @@ textarea.copy{width:100%;height:140px;font:12px ui-monospace,Menlo,monospace;bac
     <h1 id="title"></h1>
     <div class="sub" id="sub"></div>
   </div>
-  <button class="btn" id="theme" title="Switch light / dark">◐ Theme</button>
+  <div class="actions" style="margin:0;flex-wrap:nowrap;flex:none"><button class="btn" id="layout" title="Show details below the map or beside it"></button><button class="btn" id="theme" title="Switch light / dark">◐ Theme</button></div>
 </header>
 <p class="headline" id="headline" hidden></p>
 <div class="grid">
@@ -214,8 +223,8 @@ function layout(W) {
     for (let i = 0; i < ns.length; i += per) cols.push({cap: i ? '' : cap, nodes: ns.slice(i, i + per), top: ns.length > per});
   }
   const nc = Math.max(cols.length, 1);
-  const nodeW = Math.max(150, Math.min(290, (W - 2 * PAD - (nc - 1) * 56) / nc));
-  const gapX = nc > 1 ? Math.min(150, (W - 2 * PAD - nc * nodeW) / (nc - 1)) : 0;
+  const nodeW = Math.max(150, Math.min(330, (W - 2 * PAD - (nc - 1) * 56) / nc));
+  const gapX = nc > 1 ? Math.min(220, (W - 2 * PAD - nc * nodeW) / (nc - 1)) : 0;
   const x0 = (W - (nc * nodeW + (nc - 1) * gapX)) / 2;
   const maxRows = Math.max(0, ...cols.map(c => c.nodes.length));
   const colH = maxRows ? maxRows * NH + (maxRows - 1) * GAPY : 0;
@@ -443,16 +452,16 @@ function legend() {
 
 function overview() {
   const path = leaf.slice().sort((a, b) => (a.reviewOrder || 99) - (b.reviewOrder || 99));
-  let h = '<h2>What this PR does</h2>';
+  let h = '<div class="phead"><h2>What this PR does</h2>';
   if (M.why) h += `<p>${esc(M.why.text)}</p><p class="src">source: ${esc(M.why.source)}${M.why.ref ? ' · ' + esc(M.why.ref) : ''}</p>`;
-  h += '<h3>Suggested review path</h3><ol class="path-list">' + path.map(n =>
+  h += '</div><div class="pcol"><h3>Suggested review path</h3><ol class="path-list">' + path.map(n =>
     `<li class="${reviewed.has(n.id) ? 'done' : ''}">${nodeLink(n.id)}${n.mustRead ? ' <span class="tag must">must read</span>' : ''}<br><span class="src">${esc(flagLine(n) || statsLine(n))}</span></li>`).join('') + '</ol>';
   if (M.questions && M.questions.length) {
     h += '<h3>Questions worth asking</h3><ul>' + M.questions.map(q =>
       `<li>${esc(q.text)} ${q.source === 'inferred' ? '<span class="tag inf">inferred</span>' : ''}${q.block ? '<br><span class="src">block: </span>' + nodeLink(q.block) : ''}<br>${chips(q.evidence)}</li>`).join('') + '</ul>';
   }
   const br = M.blastRadius;
-  h += '<h3>Blast radius</h3><p>' + (br.affectedFiles
+  h += '</div><div class="pcol"><h3>Blast radius</h3><p>' + (br.affectedFiles
     ? `${plural(br.affectedFiles, 'unchanged file')} reference changed symbols (dashed blocks).`
     : 'No code outside this PR references a changed or removed symbol.') + ` <span class="src">Searched: ${esc(br.symbolsSearched.slice(0, 8).join(', ') || 'nothing to search (additions only)')}${br.symbolsSearched.length > 8 ? ' …' : ''}.${br.capped ? ' Capped at ' + br.caps.totalFiles + ' files.' : ''}${br.skippedTooCommon.length ? ' Skipped as too common: ' + esc(br.skippedTooCommon.join(', ')) + '.' : ''}</span></p>`;
   h += '<h3>How to read</h3><ul><li>Left to right: entry points → logic → data → infra and config. Tests sit in the bottom lane.</li><li>Click a block for what changed, why, risk flags and the diff. Esc goes back.</li><li>Anything marked <span class="tag inf">inferred</span> was written by an agent; check it against the code.</li></ul>';
@@ -462,7 +471,7 @@ function overview() {
     : '<ul class="risk">' + A.checks.map(c => `<li><span class="${c.passed ? 'check' : 'cross'}">${c.passed ? '✓' : '✗'}</span><span>${esc(c.name)} <span class="src">— ${esc(c.detail)}</span></span></li>`).join('') + '</ul>');
   h += '<h3>Rule packs</h3><p class="src">' + (M.profiles || []).map(p => esc(p.name)).join(' · ') + '</p>';
   if (M.deviations && M.deviations.length) h += '<h3>Deviations</h3><ul>' + M.deviations.map(d => `<li class="src">${esc(d)}</li>`).join('') + '</ul>';
-  h += `<p class="src">${esc(M.generator)} · ${esc(M.generatedAt)} · head ${esc(String(M.headSha).slice(0, 7))}</p>`;
+  h += `<p class="src">${esc(M.generator)} · ${esc(M.generatedAt)} · head ${esc(String(M.headSha).slice(0, 7))}</p></div>`;
   return h;
 }
 
@@ -509,7 +518,7 @@ function renderHunks(det) {
 
 function nodePanel(n) {
   const isGroup = n.kind === 'group';
-  let h = '<button class="btn" id="close" title="Close (Esc)">✕</button>';
+  let h = '<div class="phead"><button class="btn" id="close" title="Close (Esc)">✕</button>';
   h += `<h2>${esc(n.label)}</h2><div class="tags"><span class="tag ${n.status}">${esc(n.status === 'affected' ? 'unchanged, affected' : n.status)}</span><span class="tag">${esc(KINDNAME[n.kind])}</span>`;
   if (n.mustRead && !isGroup) h += '<span class="tag must">must read</span>';
   if (n.reviewOrder) h += `<span class="tag">step ${n.reviewOrder} of ${leaf.length}</span>`;
@@ -520,7 +529,7 @@ function nodePanel(n) {
   } else if (isGroup && S.open !== n.id) {
     h += '<div class="actions"><button class="btn" id="opengroup">Open group</button></div>';
   }
-  h += `<h3>What changed</h3><p class="lead">${esc(n.summary.text)}</p><div>${n.summary.source === 'inferred' ? '<span class="tag inf">inferred</span> ' : '<span class="src">extracted from the diff · </span>'}${chips(n.summary.evidence)}</div>`;
+  h += `</div><div class="pcol"><h3>What changed</h3><p class="lead">${esc(n.summary.text)}</p><div>${n.summary.source === 'inferred' ? '<span class="tag inf">inferred</span> ' : '<span class="src">extracted from the diff · </span>'}${chips(n.summary.evidence)}</div>`;
   h += '<h3>Why</h3>' + (n.why ? `<p>${esc(n.why.text)}</p><p class="src">source: ${esc(n.why.source)}${n.why.ref ? ' · ' + esc(n.why.ref) : ''}${n.why.source === 'inferred' ? ' <span class="tag inf">inferred</span>' : ''}</p>` : '<p class="src">No block-specific reason recorded. See the PR description on the overview (Esc).</p>');
   let rs = risksOf(n).slice().sort((a, b) => SEV[a.severity] - SEV[b.severity]);
   if (isGroup) {
@@ -533,9 +542,9 @@ function nodePanel(n) {
   }
   if (n.questions && n.questions.length) h += '<h3>Questions to ask</h3><ul>' + n.questions.map(q => `<li>${esc(q.text)} <span class="tag inf">inferred</span><br>${chips(q.evidence)}</li>`).join('') + '</ul>';
   if (isGroup) h += '<h3>Blocks inside</h3><ul class="links">' + kids(n.id).map(k => `<li>${nodeLink(k.id)} <span class="src">${esc(statsLine(k))}</span></li>`).join('') + '</ul>';
-  h += '<h3>Connections</h3>' + connections(n);
+  h += '</div><div class="pcol"><h3>Connections</h3>' + connections(n);
   if (!isGroup) h += `<h3>Files (${n.files.length})</h3>` + filesHtml(n);
-  return h;
+  return h + '</div>';
 }
 
 function panel() {
@@ -594,12 +603,23 @@ function jump(ev) {
   if (t) { t.classList.add('hit'); t.scrollIntoView({block: 'center'}); setTimeout(() => t.classList.remove('hit'), 2600); }
 }
 
-function select(id) {
+function select(id, fromUser) {
   const n = byId.get(id);
   if (!n) return;
   if (n.kind === 'group') { S.open = id; S.sel = id; }
   else { S.sel = id; S.open = n.parent || null; }
   sync();
+  if (fromUser && n.kind !== 'group' && document.body.classList.contains('below')) {
+    const top = $('#panel').getBoundingClientRect().top;
+    if (top > innerHeight * 0.7) scrollBy({top: top - innerHeight * 0.4, behavior: 'smooth'});
+  }
+}
+function setLayout(l) {
+  document.body.classList.toggle('below', l !== 'side');
+  document.body.classList.toggle('side', l === 'side');
+  $('#layout').textContent = l === 'side' ? '▥ Details: side' : '▤ Details: below';
+  try { localStorage.setItem('pr-visual-map:layout', l); } catch (e) { /* storage off */ }
+  draw();
 }
 function up() {
   if (S.sel && S.sel !== S.open) S.sel = S.open;
@@ -621,7 +641,7 @@ function setTheme(t) {
   try { localStorage.setItem('pr-visual-map:theme', t); } catch (e) { /* storage off */ }
 }
 
-svg.addEventListener('click', e => { const g = e.target.closest('.node'); g ? select(g.dataset.id) : (S.sel && S.sel !== S.open ? up() : null); });
+svg.addEventListener('click', e => { const g = e.target.closest('.node'); g ? select(g.dataset.id, true) : (S.sel && S.sel !== S.open ? up() : null); });
 svg.addEventListener('keydown', e => {
   if (e.key === 'Enter' || e.key === ' ') { const g = e.target.closest('.node'); if (g) { e.preventDefault(); select(g.dataset.id); } }
 });
@@ -643,6 +663,7 @@ $('#crumbs').addEventListener('click', e => {
   if (b) { S.open = b.dataset.crumb || null; S.sel = S.open; sync(); }
 });
 $('#theme').addEventListener('click', () => setTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light'));
+$('#layout').addEventListener('click', () => setLayout(document.body.classList.contains('side') ? 'below' : 'side'));
 let rt = 0;
 window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(draw, 120); });
 
@@ -650,6 +671,10 @@ const q = new URLSearchParams(location.search);
 let theme = q.get('theme');
 if (!theme) { try { theme = localStorage.getItem('pr-visual-map:theme'); } catch (e) { /* storage off */ } }
 setTheme(theme || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'));
+let lay = q.get('layout');
+if (!lay) { try { lay = localStorage.getItem('pr-visual-map:layout'); } catch (e) { /* storage off */ } }
+document.body.classList.add(lay === 'side' ? 'side' : 'below');
+$('#layout').textContent = lay === 'side' ? '▥ Details: side' : '▤ Details: below';
 header(); legend();
 if (q.get('open') && byId.has(q.get('open'))) { S.open = q.get('open'); S.sel = S.open; }
 if (q.get('sel') && byId.has(q.get('sel'))) { const n = byId.get(q.get('sel')); S.sel = n.id; if (n.kind === 'group') S.open = n.id; else if (n.parent) S.open = n.parent; }

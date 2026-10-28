@@ -1,4 +1,4 @@
-# visual-pr-review
+# pr-visual-map
 
 See a pull request as a picture before you read it line by line.
 
@@ -29,9 +29,9 @@ optional checks Chrome or Chromium plus Node.js 22+.
 Link the skill into your agent's skills folder, for example:
 
 ```sh
-git clone https://github.com/cata-enache/visual-pr-review.git
-ln -s "$PWD/visual-pr-review/skills/pr-visual-map" ~/.copilot/skills/pr-visual-map   # GitHub Copilot CLI
-ln -s "$PWD/visual-pr-review/skills/pr-visual-map" ~/.claude/skills/pr-visual-map    # Claude Code
+git clone https://github.com/cata-enache/pr-visual-map.git
+ln -s "$PWD/pr-visual-map/skills/pr-visual-map" ~/.copilot/skills/pr-visual-map   # GitHub Copilot CLI
+ln -s "$PWD/pr-visual-map/skills/pr-visual-map" ~/.claude/skills/pr-visual-map    # Claude Code
 ```
 
 Then ask your agent: *"Use the pr-visual-map skill on https://github.com/OWNER/REPO/pull/123."*

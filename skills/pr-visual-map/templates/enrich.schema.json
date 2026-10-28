@@ -1,0 +1,255 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "pr-visual-map enrich.json (the agent part)",
+  "description": "Written by the agent after reading agent-brief.md. make_map.py merges it and enforces checks A0-A10. Keys starting with '_' are ignored (informational).",
+  "type": "object",
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": {}
+  },
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "ticket": {
+      "type": "string"
+    },
+    "headline": {
+      "type": "string",
+      "minLength": 20,
+      "maxLength": 300,
+      "description": "One or two plain sentences: what the PR does and what it touches (A1)."
+    },
+    "why": {
+      "type": "object",
+      "required": [
+        "text",
+        "source"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source": {
+          "enum": [
+            "pr-body",
+            "ticket",
+            "kb",
+            "docs",
+            "commits",
+            "inferred"
+          ]
+        },
+        "ref": {
+          "type": "string",
+          "description": "Where exactly: 'PR description', a doc path, a ticket id, commit headlines."
+        }
+      },
+      "description": "Why the PR exists (A2)."
+    },
+    "questions": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 5,
+      "description": "Questions for the whole PR (A8).",
+      "items": {
+        "type": "object",
+        "required": [
+          "text",
+          "evidence"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "block": {
+            "type": "string",
+            "description": "Block id."
+          },
+          "evidence": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "pattern": "^.+:[0-9]+$"
+            },
+            "description": "path:line pairs that exist at the PR head (or in the diff for deleted files)."
+          },
+          "source": {
+            "enum": [
+              "inferred",
+              "extracted"
+            ]
+          }
+        }
+      }
+    },
+    "readme": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Notes for README.md: KB corrections, deviations, caveats."
+    },
+    "blocks": {
+      "type": "object",
+      "description": "Keyed by block or group id from enrich.skeleton.json.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "patternProperties": {
+          "^_": {}
+        },
+        "properties": {
+          "label": {
+            "type": "string",
+            "description": "Max 3 words, unique (A7)."
+          },
+          "summary": {
+            "type": "object",
+            "required": [
+              "text",
+              "source",
+              "evidence"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "text": {
+                "type": "string"
+              },
+              "source": {
+                "enum": [
+                  "extracted",
+                  "inferred"
+                ]
+              },
+              "evidence": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string",
+                  "pattern": "^.+:[0-9]+$"
+                },
+                "description": "Must include a file of this block (A9). For deleted files cite old-file line numbers."
+              }
+            }
+          },
+          "why": {
+            "type": "object",
+            "required": [
+              "text",
+              "source"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "text": {
+                "type": "string",
+                "minLength": 1
+              },
+              "source": {
+                "enum": [
+                  "pr-body",
+                  "ticket",
+                  "kb",
+                  "docs",
+                  "commits",
+                  "inferred"
+                ]
+              },
+              "ref": {
+                "type": "string",
+                "description": "Where exactly: 'PR description', a doc path, a ticket id, commit headlines."
+              }
+            }
+          },
+          "risks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "type",
+                "reason",
+                "evidence"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "description": "Short kebab-case, e.g. least-privilege, error-handling, data-loss."
+                },
+                "severity": {
+                  "enum": [
+                    "high",
+                    "medium",
+                    "low"
+                  ]
+                },
+                "reason": {
+                  "type": "string"
+                },
+                "evidence": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "string",
+                    "pattern": "^.+:[0-9]+$"
+                  },
+                  "description": "path:line pairs that exist at the PR head (or in the diff for deleted files)."
+                },
+                "source": {
+                  "enum": [
+                    "extracted",
+                    "inferred"
+                  ],
+                  "description": "extracted = read in the code; inferred = concluded. Default inferred."
+                }
+              }
+            }
+          },
+          "questions": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "object",
+                  "required": [
+                    "text"
+                  ],
+                  "properties": {
+                    "text": {
+                      "type": "string"
+                    },
+                    "evidence": {
+                      "type": "array",
+                      "minItems": 1,
+                      "items": {
+                        "type": "string",
+                        "pattern": "^.+:[0-9]+$"
+                      },
+                      "description": "path:line pairs that exist at the PR head (or in the diff for deleted files)."
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "mustRead": {
+            "type": "boolean",
+            "description": "2-4 blocks; groups cannot be must-read (A4)."
+          },
+          "reviewOrder": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Must-read blocks take 1..k (A5)."
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,661 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>__TITLE__</title>
+<style>
+:root{--bg:#0f1318;--panel:#161c24;--line:#2b3644;--text:#e8edf3;--muted:#9eacbd;--edge:#71819a;--node:#1a222c;
+--add:#4cc38a;--mod:#5aa2ff;--del:#f0706c;--aff:#9eacbd;--addbg:#132a20;--modbg:#14233d;--delbg:#2e1919;--affbg:#161c24;
+--diffadd:#173325;--diffdel:#3d1d1e;--hl:#5a4b10;--chip:#222c38;color-scheme:dark}
+[data-theme=light]{--bg:#f4f6f8;--panel:#fff;--line:#d3dae3;--text:#18212c;--muted:#556273;--edge:#8593a5;--node:#fff;
+--add:#1d8553;--mod:#2360c4;--del:#c03a35;--aff:#667385;--addbg:#e7f6ee;--modbg:#e8f0fd;--delbg:#fcecec;--affbg:#fafbfc;
+--diffadd:#e2f5e8;--diffdel:#fbe6e6;--hl:#fff0b0;--chip:#eef2f6;color-scheme:light}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{background:var(--bg)}
+body{margin:0 auto;max-width:1560px;padding:16px 24px 40px;color:var(--text);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+button{font:inherit;color:inherit}
+header{display:flex;gap:16px;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
+h1{margin:0;font-size:21px;line-height:1.3}
+.sub{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:4px;color:var(--muted);font-size:14px}
+.sub b{color:var(--text);font-weight:600}
+.pill{display:inline-block;padding:0 9px;border:1px solid var(--line);border-radius:999px;font-size:13px;white-space:nowrap}
+.btn{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px 14px;cursor:pointer;font-size:14px;white-space:nowrap}
+.btn:hover{border-color:var(--muted)}
+.btn[aria-pressed=true]{background:var(--chip);border-color:var(--muted)}
+.headline{margin:0 0 12px;padding:9px 14px;border-left:4px solid var(--mod);background:var(--panel);border-radius:0 10px 10px 0;font-size:16px}
+.headline.draft{border:1px dashed var(--muted);border-left:4px dashed var(--muted);color:var(--muted)}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:16px;align-items:start}
+.canvas{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px 10px 10px;min-width:0}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:2px 4px 6px;font-size:14px;color:var(--muted)}
+.crumbs button{background:none;border:0;padding:0;cursor:pointer;color:var(--mod);font-size:14px}
+.crumbs span{color:var(--text);font-weight:600}
+#mapwrap{width:100%}
+svg{display:block}
+.legend{display:flex;flex-wrap:wrap;gap:4px 16px;margin:6px 4px 0;color:var(--muted);font-size:13px;align-items:center}
+.legend svg{display:inline-block;vertical-align:middle}
+.cap{fill:var(--muted);font-size:12px;font-weight:700;letter-spacing:.12em}
+.lane{stroke:var(--line);stroke-dasharray:4 5}
+.node{cursor:pointer;outline:none}
+.node .body{fill:var(--node);stroke-width:2}
+.node.st-added .body{fill:var(--addbg);stroke:var(--add)}
+.node.st-modified .body{fill:var(--modbg);stroke:var(--mod)}
+.node.st-deleted .body{fill:var(--delbg);stroke:var(--del)}
+.node.st-affected .body{fill:var(--affbg);stroke:var(--aff);stroke-dasharray:7 5}
+.node.must .body{stroke-width:3.5}
+.node:hover .body{filter:brightness(1.18)}
+.node .halo{fill:none;stroke:var(--text);stroke-width:2;opacity:0}
+.node.sel .halo,.node:focus-visible .halo{opacity:1}
+.node.done{opacity:.5}
+.node .t{fill:var(--text);font-size:15px;font-weight:650}
+.node .s{fill:var(--muted);font-size:13px}
+.node .f{fill:var(--text);font-size:13px}
+.node .ico{fill:var(--chip);stroke:none}
+.node.st-none .body{fill:none;stroke:var(--muted);stroke-width:1.6}
+.node .icot{fill:var(--text);font-size:13px;font-weight:700}
+.node .ord{fill:var(--text)}
+.node .ordt{fill:var(--bg);font-size:13px;font-weight:800}
+.node .tag{fill:var(--text)}
+.node .tagt{fill:var(--bg);font-size:12px;font-weight:800;letter-spacing:.06em}
+.edge{fill:none;stroke:var(--edge);stroke-width:1.6}
+.edge.inferred{stroke-dasharray:6 5}
+.edge.affected{stroke-dasharray:2 4}
+.edge.hot{stroke:var(--text);stroke-width:2.4}
+.edge.dim{opacity:.18}
+.ahead{fill:var(--edge)}
+.ahead.hot{fill:var(--text)}
+#panel{overflow-wrap:anywhere;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 18px 18px;position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}
+#panel h2{margin:0 0 4px;font-size:19px;line-height:1.3}
+#panel h3{margin:16px 0 6px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+#panel p{margin:6px 0}
+#panel ul,#panel ol{margin:0;padding-left:20px}
+#panel li{margin:5px 0}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 8px}
+.tag{display:inline-block;padding:0 9px;border-radius:999px;font-size:12.5px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.tag.added{color:var(--add);border-color:var(--add)}.tag.modified{color:var(--mod);border-color:var(--mod)}
+.tag.deleted{color:var(--del);border-color:var(--del)}.tag.affected{color:var(--aff);border-style:dashed}
+.tag.inf{color:var(--text);border-style:dashed}
+.tag.must{background:var(--text);color:var(--bg);border-color:var(--text);font-weight:700}
+.lead{font-size:16px}
+.src{color:var(--muted);font-size:13px}
+.ev{display:inline-block;margin:2px 4px 0 0;padding:0 7px;border:1px solid var(--line);border-radius:6px;background:var(--chip);font:12.5px ui-monospace,SFMono-Regular,Menlo,monospace;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom}
+.ev:hover{border-color:var(--muted)}
+.risk{list-style:none;padding:0!important}
+.risk li{display:grid;grid-template-columns:auto 1fr;gap:2px 8px;align-items:baseline}
+.sev{font-size:12px;font-weight:800;letter-spacing:.05em;padding:0 6px;border-radius:5px;border:1px solid var(--line)}
+.sev.high{background:var(--text);color:var(--bg)}
+.sev.low{color:var(--muted)}
+.risk .why{grid-column:2}
+.path{font:13px ui-monospace,SFMono-Regular,Menlo,monospace;word-break:break-all}
+details.file{border:1px solid var(--line);border-radius:8px;margin:6px 0;background:var(--bg)}
+details.file>summary{cursor:pointer;padding:5px 9px;display:flex;gap:8px;align-items:baseline;list-style:none}
+details.file>summary::-webkit-details-marker{display:none}
+details.file>summary::before{content:"▸";color:var(--muted)}
+details.file[open]>summary::before{content:"▾"}
+.num{margin-left:auto;color:var(--muted);font-size:13px;white-space:nowrap}
+.st{font:700 12px ui-monospace,Menlo,monospace;padding:0 5px;border-radius:4px;border:1px solid var(--line)}
+.hunks{overflow:auto;max-height:520px;border-top:1px solid var(--line)}
+.hh{padding:3px 9px;color:var(--muted);font:12.5px ui-monospace,Menlo,monospace;background:var(--chip)}
+pre.diff{margin:0;font:12.5px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;tab-size:4}
+pre.diff span{display:block;white-space:pre;padding-right:10px}
+pre.diff .a{background:var(--diffadd)}pre.diff .d{background:var(--diffdel)}
+pre.diff .hit,.hh.hit{background:var(--hl)}
+pre.diff i{display:inline-block;width:3.6em;padding-right:.6em;text-align:right;color:var(--muted);font-style:normal;user-select:none}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 4px}
+.links li{cursor:pointer}
+.links li:hover{text-decoration:underline}
+.path-list li.done{color:var(--muted);text-decoration:line-through}
+.check{color:var(--add)}.cross{color:var(--del)}
+#close{display:none;float:right}
+textarea.copy{width:100%;height:140px;font:12px ui-monospace,Menlo,monospace;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:8px}
+@media (max-width:1180px){
+ .grid{grid-template-columns:1fr}
+ #panel{position:static;max-height:none}
+ body.has-sel #panel{position:fixed;top:0;right:0;bottom:0;width:min(460px,94vw);max-height:none;z-index:5;border-radius:0;box-shadow:-14px 0 30px rgba(0,0,0,.35)}
+ body.has-sel #close{display:inline-block}
+}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1 id="title"></h1>
+    <div class="sub" id="sub"></div>
+  </div>
+  <button class="btn" id="theme" title="Switch light / dark">◐ Theme</button>
+</header>
+<p class="headline" id="headline" hidden></p>
+<div class="grid">
+  <section class="canvas">
+    <div class="bar"><nav class="crumbs" id="crumbs"></nav><span><span id="edgenote"></span><span id="coverage"></span></span></div>
+    <div id="mapwrap"><svg id="map" role="group" aria-label="Map of the pull request"></svg></div>
+    <div class="legend" id="legend"></div>
+  </section>
+  <aside id="panel" aria-live="polite"></aside>
+</div>
+<script type="application/json" id="graph-data">__GRAPH_JSON__</script>
+<script>
+(function () {
+'use strict';
+const G = JSON.parse(document.getElementById('graph-data').textContent);
+const M = G.meta;
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+const byId = new Map(G.nodes.map(n => [n.id, n]));
+const kids = id => G.nodes.filter(n => n.parent === id).sort((a, b) => a.rank - b.rank);
+const leaf = G.nodes.filter(n => n.kind !== 'group' && n.status !== 'affected');
+const fileOwner = new Map();
+G.nodes.forEach(n => n.files.forEach(f => fileOwner.set(f.path, n.id)));
+const KEY = 'pr-visual-map:' + M.repo + '#' + M.pr + '@' + String(M.headSha || '').slice(0, 7);
+let reviewed = new Set();
+try { reviewed = new Set(JSON.parse(localStorage.getItem(KEY) || '[]')); } catch (e) { /* storage off */ }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify([...reviewed])); } catch (e) { /* storage off */ } };
+const S = {open: null, sel: null};
+const LAYERS = [['entry', 'ENTRY · API · UI'], ['logic', 'LOGIC'], ['data', 'DATA'], ['infra', 'INFRA · CONFIG']];
+const ICON = {endpoint: 'API', ui: 'UI', handler: 'fn', dto: '{ }', entity: 'DB', migration: 'MIG', config: 'CFG', infra: 'IaC', test: 'TST', group: '≡', unmapped: '?'};
+const KINDNAME = {endpoint: 'endpoint', ui: 'UI', handler: 'logic', dto: 'contract / DTO', entity: 'domain / data', migration: 'migration', config: 'config', infra: 'infrastructure', test: 'tests', group: 'group', unmapped: 'unmapped'};
+const SEV = {high: 0, medium: 1, low: 2};
+const NH = 84, GAPY = 18, PAD = 20, HEAD = 30;
+const svg = $('#map');
+
+const risksOf = n => n.kind === 'group' ? kids(n.id).flatMap(risksOf) : n.risk;
+const leaves = n => n.kind === 'group' ? kids(n.id).flatMap(leaves) : [n];
+const MAX_EDGES = 24;
+const plural = (k, w) => k + ' ' + w + (k === 1 ? '' : 's');
+const stepOf = n => n.reviewOrder ? n.reviewOrder : null;
+
+function statsLine(n) {
+  const st = n.stats;
+  const done = reviewed.has(n.id) ? '✓ reviewed · ' : '';
+  if (n.kind === 'group') return `${done}${plural(leaves(n).length, 'block')} · ${plural(st.files, 'file')} · +${st.additions} −${st.deletions}`;
+  if (n.status === 'affected') return `affected · ${plural(st.files, 'file')} · ${plural(st.refs || 0, 'ref')}`;
+  return `${done}${n.status} · ${plural(st.files, 'file')} · +${st.additions} −${st.deletions}`;
+}
+function flagLine(n) {
+  if (n.kind === 'group') {
+    const must = leaves(n).filter(k => k.mustRead).map(k => k.reviewOrder).filter(Boolean).sort((a, b) => a - b);
+    const hi = risksOf(n).filter(r => r.severity === 'high').length;
+    return (must.length ? 'must read inside: ' + must.join(', ') + ' · ' : '') + (hi ? `⚠ ${hi} high · ` : '') + 'click to open';
+  }
+  const rs = risksOf(n).slice().sort((a, b) => SEV[a.severity] - SEV[b.severity]);
+  const main = [...new Set(rs.filter(r => r.severity !== 'low').map(r => r.type))];
+  if (!main.length) return rs.length ? 'low: ' + [...new Set(rs.map(r => r.type))].join(', ') : (n.generated ? 'generated code' : '');
+  return '⚠ ' + main.slice(0, 3).join(' · ') + (main.length > 3 ? ' +' + (main.length - 3) : '');
+}
+
+function shape(kind, x, y, w, h) {
+  const r = Math.min(9, h / 5);
+  const rr = q => `M${x + q},${y}H${x + w - q}Q${x + w},${y} ${x + w},${y + q}V${y + h - q}Q${x + w},${y + h} ${x + w - q},${y + h}H${x + q}Q${x},${y + h} ${x},${y + h - q}V${y + q}Q${x},${y} ${x + q},${y}Z`;
+  switch (kind) {
+    case 'endpoint': { const p = Math.min(16, h / 4); return `M${x + p},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h - r}Q${x + w},${y + h} ${x + w - r},${y + h}H${x + p}L${x},${y + h / 2}Z`; }
+    case 'ui': return rr(Math.min(22, h / 2.4));
+    case 'dto': { const c = Math.min(18, h / 4); return `M${x + r},${y}H${x + w - c}L${x + w},${y + c}V${y + h - r}Q${x + w},${y + h} ${x + w - r},${y + h}H${x + r}Q${x},${y + h} ${x},${y + h - r}V${y + r}Q${x},${y} ${x + r},${y}Z`; }
+    case 'entity': case 'migration': { const e = Math.min(10, h / 5); return `M${x},${y + e}A${w / 2},${e} 0 0 1 ${x + w},${y + e}V${y + h - e}A${w / 2},${e} 0 0 1 ${x},${y + h - e}Z M${x},${y + e}A${w / 2},${e} 0 0 0 ${x + w},${y + e}`; }
+    case 'config': case 'infra': { const c = Math.min(12, h / 4); return `M${x + c},${y}H${x + w - c}L${x + w},${y + c}V${y + h - c}L${x + w - c},${y + h}H${x + c}L${x},${y + h - c}V${y + c}Z`; }
+    case 'test': return rr(Math.min(3, r));
+    default: return rr(r);
+  }
+}
+
+function visible() {
+  return G.nodes.filter(n => (S.open ? n.parent === S.open : !n.parent)).sort((a, b) => a.rank - b.rank);
+}
+
+function layout(W) {
+  const vis = visible();
+  const tests = vis.filter(n => n.layer === 'tests');
+  const main = vis.filter(n => n.layer !== 'tests');
+  const cols = [];
+  for (const [k, cap] of LAYERS) {
+    const ns = main.filter(n => n.layer === k);
+    if (!ns.length) continue;
+    const per = Math.ceil(ns.length / Math.ceil(ns.length / 6));
+    for (let i = 0; i < ns.length; i += per) cols.push({cap: i ? '' : cap, nodes: ns.slice(i, i + per), top: ns.length > per});
+  }
+  const nc = Math.max(cols.length, 1);
+  const nodeW = Math.max(150, Math.min(290, (W - 2 * PAD - (nc - 1) * 56) / nc));
+  const gapX = nc > 1 ? Math.min(150, (W - 2 * PAD - nc * nodeW) / (nc - 1)) : 0;
+  const x0 = (W - (nc * nodeW + (nc - 1) * gapX)) / 2;
+  const maxRows = Math.max(0, ...cols.map(c => c.nodes.length));
+  const colH = maxRows ? maxRows * NH + (maxRows - 1) * GAPY : 0;
+  const pos = new Map(), caps = [], colX = [];
+  cols.forEach((c, i) => {
+    const x = x0 + i * (nodeW + gapX);
+    colX.push(x);
+    if (c.cap) caps.push({x, y: 20, text: c.cap});
+    const h = c.nodes.length * NH + (c.nodes.length - 1) * GAPY;
+    let y = HEAD + 12 + (c.top ? 0 : (colH - h) / 2);
+    c.nodes.forEach(n => { pos.set(n.id, {x, y, w: nodeW, h: NH}); y += NH + GAPY; });
+  });
+  let H = main.length ? HEAD + 12 + colH + 16 : 0;
+  let lane = null;
+  if (tests.length) {
+    const slots = colX.length ? colX.slice() : [x0];
+    const gx = nc > 1 ? gapX : 40;
+    while (slots.length < tests.length && slots[slots.length - 1] + 2 * nodeW + gx <= W - PAD) slots.push(slots[slots.length - 1] + nodeW + gx);
+    lane = {y: H + 4, x: PAD};
+    const taken = new Map();
+    let row = 0;
+    tests.forEach(n => {
+      const target = G.edges.find(e => e.from === n.id && pos.has(e.to));
+      let want = target ? colX.indexOf(pos.get(target.to).x) : 0;
+      if (want < 0) want = 0;
+      let r = 0, c = want;
+      for (;;) {
+        const free = slots.findIndex((_, i) => !taken.has(r + ':' + ((want + i) % slots.length)));
+        if (free >= 0) { c = (want + free) % slots.length; break; }
+        r++;
+      }
+      taken.set(r + ':' + c, 1);
+      row = Math.max(row, r);
+      pos.set(n.id, {x: slots[c], y: lane.y + HEAD + r * (NH + GAPY), w: nodeW, h: NH});
+    });
+    H = lane.y + HEAD + (row + 1) * NH + row * GAPY + 8;
+  }
+  return {pos, caps, lane, H: Math.max(H, 120), W, nodeW};
+}
+
+function visibleEdges(pos) {
+  const visId = id => { let n = byId.get(id); while (n && !pos.has(n.id)) n = n.parent ? byId.get(n.parent) : null; return n ? n.id : null; };
+  const rank = {static: 0, inferred: 1, affected: 2};
+  const agg = new Map();
+  for (const e of G.edges) {
+    const a = visId(e.from), b = visId(e.to);
+    if (!a || !b || a === b) continue;
+    const k = a + '|' + b, cur = agg.get(k);
+    if (!cur || rank[e.source] < rank[cur.source]) agg.set(k, {a, b, source: e.source});
+  }
+  return [...agg.values()];
+}
+
+function routeEdges(edges, pos) {
+  const ports = new Map();
+  const boxes = [...pos.values()];
+  const minX = Math.min(...boxes.map(p => p.x));
+  const blocked = (a, b) => {
+    const lo = Math.min(a.y + a.h, b.y + b.h), hi = Math.max(a.y, b.y);
+    const l = Math.max(a.x, b.x) + 10, r = Math.min(a.x + a.w, b.x + b.w) - 10;
+    return boxes.some(p => p !== a && p !== b && p.x < r && p.x + p.w > l && p.y < hi && p.y + p.h > lo);
+  };
+  const port = (id, side, other, e, end) => {
+    const k = id + ':' + side;
+    if (!ports.has(k)) ports.set(k, []);
+    ports.get(k).push({other, e, end});
+  };
+  for (const e of edges) {
+    const a = pos.get(e.a), b = pos.get(e.b);
+    let sa, sb;
+    const stacked = Math.abs(a.x - b.x) < a.w;
+    if (stacked && a.y >= b.y + b.h + 6 && !blocked(a, b)) { sa = 'top'; sb = 'bottom'; }
+    else if (stacked && b.y >= a.y + a.h + 6 && !blocked(a, b)) { sa = 'bottom'; sb = 'top'; }
+    else if (stacked) { sa = sb = Math.min(a.x, b.x) <= minX + 1 ? 'right' : 'left'; }
+    else if (a.x < b.x) { sa = 'right'; sb = 'left'; }
+    else { sa = 'left'; sb = 'right'; }
+    e.sa = sa; e.sb = sb;
+    port(e.a, sa, b, e, 'a');
+    port(e.b, sb, a, e, 'b');
+  }
+  for (const [k, list] of ports) {
+    const [id, side] = k.split(':');
+    const p = pos.get(id), vert = side === 'left' || side === 'right';
+    list.sort((u, v) => vert ? (u.other.y - v.other.y) : (u.other.x - v.other.x));
+    const span = vert ? p.h - 24 : p.w - 40, step = Math.min(14, span / Math.max(1, list.length));
+    list.forEach((it, i) => {
+      const off = (i - (list.length - 1) / 2) * step;
+      const pt = side === 'left' ? [p.x, p.y + p.h / 2 + off] : side === 'right' ? [p.x + p.w, p.y + p.h / 2 + off]
+        : side === 'top' ? [p.x + p.w / 2 + off, p.y] : [p.x + p.w / 2 + off, p.y + p.h];
+      it.e[it.end === 'a' ? 'pa' : 'pb'] = pt;
+    });
+  }
+  return edges.map(e => {
+    const [x1, y1] = e.pa, [x2, y2] = e.pb;
+    const dir = {left: [-1, 0], right: [1, 0], top: [0, -1], bottom: [0, 1]};
+    const d = e.sa === e.sb ? 48 : Math.max(36, Math.min(110, Math.hypot(x2 - x1, y2 - y1) / 2.4));
+    const [ax, ay] = dir[e.sa], [bx, by] = dir[e.sb];
+    return Object.assign(e, {d: `M${x1},${y1}C${x1 + ax * d},${y1 + ay * d} ${x2 + bx * d},${y2 + by * d} ${x2},${y2}`});
+  });
+}
+
+function nodeSvg(n, p) {
+  const cls = ['node', 'k-' + n.kind, 'st-' + n.status];
+  if (n.mustRead && n.kind !== 'group') cls.push('must');
+  if (reviewed.has(n.id)) cls.push('done');
+  if (S.sel === n.id && S.sel !== S.open) cls.push('sel');
+  const {x, y, w, h} = p;
+  const ix = x + (n.kind === 'endpoint' ? 22 : 12);
+  let s = `<g class="${cls.join(' ')}" data-id="${esc(n.id)}" tabindex="0" role="button" aria-label="${esc(n.label + ', ' + statsLine(n))}">`;
+  s += `<title>${esc(n.label + ' — ' + n.summary.text)}</title>`;
+  s += `<rect class="halo" x="${x - 6}" y="${y - 6}" width="${w + 12}" height="${h + 12}" rx="13"/>`;
+  if (n.kind === 'group') s += `<path class="body" d="${shape('group', x + 7, y - 7, w, h)}"/>`;
+  s += `<path class="body" d="${shape(n.kind, x, y, w, h)}"/>`;
+  s += `<rect class="ico" x="${ix}" y="${y + 12}" width="36" height="24" rx="6"/><text class="icot" x="${ix + 18}" y="${y + 29}" text-anchor="middle">${esc(ICON[n.kind] || '?')}</text>`;
+  s += `<text class="t" x="${ix + 46}" y="${y + 30}" data-max="${x + w - 10 - (ix + 46)}">${esc(n.label)}</text>`;
+  s += `<text class="s" x="${ix}" y="${y + 56}" data-max="${x + w - 10 - ix}">${esc(statsLine(n))}</text>`;
+  s += `<text class="f" x="${ix}" y="${y + 75}" data-max="${x + w - 10 - ix}">${esc(flagLine(n))}</text>`;
+  const step = stepOf(n);
+  if (step && n.kind !== 'group') s += `<circle class="ord" cx="${x + 2}" cy="${y + 2}" r="12"/><text class="ordt" x="${x + 2}" y="${y + 6.5}" text-anchor="middle">${step}</text>`;
+  if (n.mustRead && n.kind !== 'group') s += `<rect class="tag" x="${x + w - 92}" y="${y - 10}" width="84" height="20" rx="10"/><text class="tagt" x="${x + w - 50}" y="${y + 4.5}" text-anchor="middle">MUST READ</text>`;
+  return s + '</g>';
+}
+
+function fitText() {
+  svg.querySelectorAll('text[data-max]').forEach(t => {
+    const max = +t.dataset.max;
+    if (t.getComputedTextLength() <= max) return;
+    if (t.classList.contains('t')) {
+      t.style.fontSize = '14px';
+      if (t.getComputedTextLength() <= max) return;
+      t.style.fontSize = '13px';
+    }
+    const full = t.textContent;
+    let lo = 1, hi = full.length;
+    while (lo < hi) {
+      const mid = (lo + hi + 1) >> 1;
+      t.textContent = full.slice(0, mid) + '…';
+      if (t.getComputedTextLength() <= max) lo = mid; else hi = mid - 1;
+    }
+    t.textContent = full.slice(0, lo) + '…';
+  });
+}
+
+function draw() {
+  const W = Math.max(560, Math.floor($('#mapwrap').clientWidth));
+  const L = layout(W);
+  const hotId = S.sel && S.sel !== S.open ? S.sel : null;
+  let all = visibleEdges(L.pos);
+  const thinned = all.length > MAX_EDGES;
+  if (thinned) all = hotId ? all.filter(e => e.a === hotId || e.b === hotId) : [];
+  const edges = routeEdges(all, L.pos);
+  $('#edgenote').textContent = thinned ? `${visibleEdges(L.pos).length} links: click a block to see its links · ` : '';
+  let s = '<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ahead" d="M0,0L10,5L0,10z"/></marker>'
+    + '<marker id="ahh" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="ahead hot" d="M0,0L10,5L0,10z"/></marker></defs>';
+  L.caps.forEach(c => { s += `<text class="cap" x="${c.x}" y="${c.y}">${c.text}</text>`; });
+  if (L.lane) s += `<line class="lane" x1="${PAD}" x2="${W - PAD}" y1="${L.lane.y}" y2="${L.lane.y}"/><text class="cap" x="${PAD}" y="${L.lane.y + 20}">TESTS</text>`;
+  edges.forEach(e => {
+    const hot = hotId && (e.a === hotId || e.b === hotId), dim = hotId && !hot;
+    s += `<path class="edge ${e.source}${hot ? ' hot' : ''}${dim ? ' dim' : ''}" d="${e.d}" marker-end="url(#${hot ? 'ahh' : 'ah'})"/>`;
+  });
+  visible().forEach(n => { s += nodeSvg(n, L.pos.get(n.id)); });
+  svg.setAttribute('width', W);
+  svg.setAttribute('height', L.H);
+  svg.setAttribute('viewBox', `0 0 ${W} ${L.H}`);
+  svg.innerHTML = s;
+  fitText();
+}
+
+const chips = ev => (ev || []).map(e => `<button class="ev" data-ev="${esc(e)}" title="${esc(e)}">${esc(shortEv(e))}</button>`).join('');
+const ALLPATHS = [...new Set(G.nodes.flatMap(n => n.files.map(f => f.path)).concat(
+  G.nodes.flatMap(n => [n.summary.evidence, ...n.risk.map(r => r.evidence), ...n.questions.map(q => q.evidence || [])].flat()),
+  G.edges.flatMap(e => e.evidence), (M.questions || []).flatMap(q => q.evidence)).map(e => String(e).replace(/:\d+$/, '')))];
+const SHORT = new Map();
+function shortPath(p) {
+  if (SHORT.has(p)) return SHORT.get(p);
+  const segs = p.split('/');
+  let k = 1;
+  while (k < segs.length && ALLPATHS.some(o => o !== p && o.split('/').slice(-k).join('/') === segs.slice(-k).join('/'))) k++;
+  const out = segs.slice(-k).join('/');
+  SHORT.set(p, out);
+  return out;
+}
+function shortEv(e) { const i = e.lastIndexOf(':'); return shortPath(e.slice(0, i)) + ':' + e.slice(i + 1); }
+const srcTag = s => s === 'inferred' ? '<span class="tag inf">inferred</span>' : `<span class="tag">${esc(s)}</span>`;
+const nodeLink = id => { const n = byId.get(id); return n ? `<a class="go" data-go="${esc(id)}" href="#" role="button">${esc(n.label)}</a>` : esc(id); };
+
+function header() {
+  $('#title').textContent = M.title;
+  const sub = [`<span><b>${esc(M.repo.split('/').pop())}</b>${M.pr ? ' #' + M.pr : ''}</span>`];
+  if (M.ticket) sub.push(`<span class="pill">${esc(M.ticket)}</span>`);
+  sub.push(`<span>${esc(M.base)} ← ${esc(M.head)}</span>`);
+  if (M.state) sub.push(`<span>${esc(M.state.toLowerCase())}${M.author ? ' · ' + esc(M.author) : ''}</span>`);
+  sub.push(`<span><b>${M.totals.files}</b> files · <b>+${M.totals.additions}</b> <b>−${M.totals.deletions}</b></span>`);
+  sub.push('<span id="revcount"></span>');
+  sub.push(`<span>${M.selfCheck.passed ? '<span class="check">✓</span> self-check passed' : '<span class="cross">✗</span> self-check failed'}</span>`);
+  const ag = (M.agent || {}).status || 'missing';
+  sub.push(`<span>${ag === 'passed' ? '<span class="check">✓</span> agent part passed' : 'draft: no agent part'}</span>`);
+  $('#sub').innerHTML = sub.join('');
+  if (M.headline) { $('#headline').hidden = false; $('#headline').textContent = M.headline; }
+  else if (ag !== 'passed') { $('#headline').hidden = false; $('#headline').classList.add('draft'); $('#headline').textContent = 'Draft: files, links and rule flags only. No agent has written the summaries, the why or the review path yet (see agent-brief.md).'; }
+  $('#coverage').textContent = `${M.coverage.mapped} of ${M.coverage.total} files mapped`;
+}
+function revcount() { $('#revcount').innerHTML = `reviewed <b>${leaf.filter(n => reviewed.has(n.id)).length}/${leaf.length}</b>`; }
+
+function crumbs() {
+  const parts = ['<button data-crumb="">All blocks</button>'];
+  const chain = [];
+  for (let g = S.open; g; g = byId.get(g).parent) chain.unshift(g);
+  chain.forEach((g, i) => parts.push(i === chain.length - 1 ? `<span>${esc(byId.get(g).label)}</span>` : `<button data-crumb="${esc(g)}">${esc(byId.get(g).label)}</button>`));
+  $('#crumbs').innerHTML = parts.join(' › ') + (S.open ? ' <span class="src">(Esc = back)</span>' : '');
+}
+
+function legend() {
+  const mini = (cls, kind) => `<svg width="38" height="22" viewBox="-3 -3 40 26"><g class="node ${cls}"><path class="body" d="${shape(kind, 0, 0, 34, 20)}"/></g></svg>`;
+  const line = cls => `<svg width="40" height="12"><path class="edge ${cls}" d="M2,6H38"/></svg>`;
+  const kinds = [...new Set(G.nodes.map(n => n.kind))];
+  const st = [['st-added', 'added'], ['st-modified', 'modified'], ['st-deleted', 'deleted'], ['st-affected', 'unchanged but affected']]
+    .filter(([c]) => G.nodes.some(n => 'st-' + n.status === c)).map(([c, t]) => `<span>${mini(c, 'handler')} ${t}</span>`);
+  const ln = [['static', 'found in code'], ['inferred', 'inferred link'], ['affected', 'references changed code']]
+    .filter(([c]) => G.edges.some(e => e.source === c)).map(([c, t]) => `<span>${line(c)} ${t}</span>`);
+  const sh = kinds.map(k => `<span>${mini('st-none', k)} ${KINDNAME[k]}</span>`);
+  $('#legend').innerHTML = st.join('') + ln.join('') + '<span>thick border + MUST READ = read the code · ① = review step</span>'
+    + '<br style="flex-basis:100%;height:0">' + sh.join('');
+}
+
+function overview() {
+  const path = leaf.slice().sort((a, b) => (a.reviewOrder || 99) - (b.reviewOrder || 99));
+  let h = '<h2>What this PR does</h2>';
+  if (M.why) h += `<p>${esc(M.why.text)}</p><p class="src">source: ${esc(M.why.source)}${M.why.ref ? ' · ' + esc(M.why.ref) : ''}</p>`;
+  h += '<h3>Suggested review path</h3><ol class="path-list">' + path.map(n =>
+    `<li class="${reviewed.has(n.id) ? 'done' : ''}">${nodeLink(n.id)}${n.mustRead ? ' <span class="tag must">must read</span>' : ''}<br><span class="src">${esc(flagLine(n) || statsLine(n))}</span></li>`).join('') + '</ol>';
+  if (M.questions && M.questions.length) {
+    h += '<h3>Questions worth asking</h3><ul>' + M.questions.map(q =>
+      `<li>${esc(q.text)} ${q.source === 'inferred' ? '<span class="tag inf">inferred</span>' : ''}${q.block ? '<br><span class="src">block: </span>' + nodeLink(q.block) : ''}<br>${chips(q.evidence)}</li>`).join('') + '</ul>';
+  }
+  const br = M.blastRadius;
+  h += '<h3>Blast radius</h3><p>' + (br.affectedFiles
+    ? `${plural(br.affectedFiles, 'unchanged file')} reference changed symbols (dashed blocks).`
+    : 'No code outside this PR references a changed or removed symbol.') + ` <span class="src">Searched: ${esc(br.symbolsSearched.slice(0, 8).join(', ') || 'nothing to search (additions only)')}${br.symbolsSearched.length > 8 ? ' …' : ''}.${br.capped ? ' Capped at ' + br.caps.totalFiles + ' files.' : ''}${br.skippedTooCommon.length ? ' Skipped as too common: ' + esc(br.skippedTooCommon.join(', ')) + '.' : ''}</span></p>`;
+  h += '<h3>How to read</h3><ul><li>Left to right: entry points → logic → data → infra and config. Tests sit in the bottom lane.</li><li>Click a block for what changed, why, risk flags and the diff. Esc goes back.</li><li>Anything marked <span class="tag inf">inferred</span> was written by an agent; check it against the code.</li></ul>';
+  h += `<h3>Checks</h3><ul class="risk">` + M.selfCheck.checks.map(c => `<li><span class="${c.passed ? 'check' : 'cross'}">${c.passed ? '✓' : '✗'}</span><span>${esc(c.name)} <span class="src">— ${esc(c.detail)}</span></span></li>`).join('') + '</ul>';
+  const A = M.agent || {status: 'missing', checks: []};
+  h += `<h3>Agent part: ${esc(A.status)}</h3>` + (A.status === 'missing' ? '<p class="src">No enrich.json yet: summaries, why and review path are rule defaults.</p>'
+    : '<ul class="risk">' + A.checks.map(c => `<li><span class="${c.passed ? 'check' : 'cross'}">${c.passed ? '✓' : '✗'}</span><span>${esc(c.name)} <span class="src">— ${esc(c.detail)}</span></span></li>`).join('') + '</ul>');
+  h += '<h3>Rule packs</h3><p class="src">' + (M.profiles || []).map(p => esc(p.name)).join(' · ') + '</p>';
+  if (M.deviations && M.deviations.length) h += '<h3>Deviations</h3><ul>' + M.deviations.map(d => `<li class="src">${esc(d)}</li>`).join('') + '</ul>';
+  h += `<p class="src">${esc(M.generator)} · ${esc(M.generatedAt)} · head ${esc(String(M.headSha).slice(0, 7))}</p>`;
+  return h;
+}
+
+function connections(n) {
+  const ids = n.kind === 'group' ? new Set([n.id, ...kids(n.id).map(k => k.id)]) : new Set([n.id]);
+  const out = G.edges.filter(e => ids.has(e.from) && !ids.has(e.to));
+  const inc = G.edges.filter(e => ids.has(e.to) && !ids.has(e.from));
+  const row = (e, dir) => `<li>${dir === 'out' ? e.kind + ' → ' + nodeLink(e.to) : nodeLink(e.from) + ' → ' + e.kind}
+    ${e.source === 'static' ? '<span class="tag">found in code</span>' : e.source === 'inferred' ? '<span class="tag inf">inferred</span>' : '<span class="tag affected">affected</span>'}
+    ${e.symbols && e.symbols.length ? '<br><span class="src">' + esc(e.symbols.slice(0, 4).join(', ')) + (e.symbols.length > 4 ? ' …' : '') + '</span>' : ''}${e.note ? '<br><span class="src">' + esc(e.note) + '</span>' : ''}<br>${chips(e.evidence)}</li>`;
+  if (!out.length && !inc.length) return '<p class="src">No links to other changed blocks.</p>';
+  return '<ul>' + out.map(e => row(e, 'out')).join('') + inc.map(e => row(e, 'in')).join('') + '</ul>';
+}
+
+function filesHtml(n) {
+  const st = {added: 'A', modified: 'M', deleted: 'D', renamed: 'R', affected: '↯'};
+  return n.files.map((f, i) => `<details class="file" data-path="${esc(f.path)}" data-i="${i}"><summary><span class="st">${st[f.status] || '?'}</span><span class="path">${esc(f.path.split('/').slice(-2).join('/'))}</span><span class="num">${f.status === 'affected' ? plural(f.hunks.length, 'ref') : '+' + f.additions + ' −' + f.deletions}${f.generated ? ' · gen' : ''}</span></summary>`
+    + `<div class="src" style="padding:0 9px 4px">${esc(f.path)}${f.oldPath ? ' (was ' + esc(f.oldPath) + ')' : ''}</div><div class="hunks"></div></details>`).join('');
+}
+
+function renderHunks(det) {
+  if (det.dataset.ready) return;
+  det.dataset.ready = '1';
+  const f = byId.get(fileOwner.get(det.dataset.path)).files[+det.dataset.i];
+  let h = '';
+  const old = f.status === 'deleted';
+  for (const hk of f.hunks) {
+    h += `<div class="hh">${esc(hk.header)}${old ? ' · old-file line numbers' : ''}</div><pre class="diff">`;
+    let ln = old && hk.oldStart != null ? hk.oldStart : hk.startLine;
+    for (const line of hk.lines) {
+      const t = line[0];
+      if (t === '\\') { h += `<span><i></i>${esc(line)}</span>`; continue; }
+      if (t === '-' && old) { h += `<span class="d" data-ln="${ln}"><i>${ln}</i>${esc(line)}</span>`; ln++; continue; }
+      if (t === '-') { h += `<span class="d" data-ln="${ln}"><i></i>${esc(line)}</span>`; continue; }
+      h += `<span class="${t === '+' ? 'a' : ''}" data-ln="${ln}"><i>${ln}</i>${esc(line)}</span>`;
+      ln++;
+    }
+    h += '</pre>';
+  }
+  if (f.truncated) h += '<div class="hh">… truncated in this page; the PR has the full diff.</div>';
+  if (!f.hunks.length) h += `<div class="hh">${f.binary ? 'Binary file, no text diff.' : 'No text lines in this change (empty file, rename or mode change).'}</div>`;
+  det.querySelector('.hunks').innerHTML = h;
+}
+
+function nodePanel(n) {
+  const isGroup = n.kind === 'group';
+  let h = '<button class="btn" id="close" title="Close (Esc)">✕</button>';
+  h += `<h2>${esc(n.label)}</h2><div class="tags"><span class="tag ${n.status}">${esc(n.status === 'affected' ? 'unchanged, affected' : n.status)}</span><span class="tag">${esc(KINDNAME[n.kind])}</span>`;
+  if (n.mustRead && !isGroup) h += '<span class="tag must">must read</span>';
+  if (n.reviewOrder) h += `<span class="tag">step ${n.reviewOrder} of ${leaf.length}</span>`;
+  if (n.generated) h += '<span class="tag">generated</span>';
+  h += `<span class="tag">${esc(statsLine(n))}</span></div>`;
+  if (!isGroup && n.status !== 'affected') {
+    h += `<div class="actions"><button class="btn" id="rev" aria-pressed="${reviewed.has(n.id)}">${reviewed.has(n.id) ? '✓ Reviewed' : 'Mark reviewed'}</button><button class="btn" id="copy">Copy question for agent</button></div>`;
+  } else if (isGroup && S.open !== n.id) {
+    h += '<div class="actions"><button class="btn" id="opengroup">Open group</button></div>';
+  }
+  h += `<h3>What changed</h3><p class="lead">${esc(n.summary.text)}</p><div>${n.summary.source === 'inferred' ? '<span class="tag inf">inferred</span> ' : '<span class="src">extracted from the diff · </span>'}${chips(n.summary.evidence)}</div>`;
+  h += '<h3>Why</h3>' + (n.why ? `<p>${esc(n.why.text)}</p><p class="src">source: ${esc(n.why.source)}${n.why.ref ? ' · ' + esc(n.why.ref) : ''}${n.why.source === 'inferred' ? ' <span class="tag inf">inferred</span>' : ''}</p>` : '<p class="src">No block-specific reason recorded. See the PR description on the overview (Esc).</p>');
+  let rs = risksOf(n).slice().sort((a, b) => SEV[a.severity] - SEV[b.severity]);
+  if (isGroup) {
+    const agg = new Map();
+    rs.forEach(r => { const k = r.severity + '|' + r.type; const a = agg.get(k) || {severity: r.severity, type: r.type, source: r.source, n: 0, evidence: [], reason: r.reason}; a.n++; if (a.evidence.length < 3) a.evidence.push(r.evidence[0]); agg.set(k, a); });
+    rs = [...agg.values()].map(a => Object.assign(a, {reason: a.n > 1 ? `${a.n} blocks, e.g. ${a.reason}` : a.reason}));
+  }
+  if (rs.length) {
+    h += '<h3>Risk flags</h3><ul class="risk">' + rs.map(r => `<li><span class="sev ${r.severity}">${r.severity.toUpperCase()}</span><span><b>${esc(r.type)}</b>: ${esc(r.reason)} ${r.by === 'agent' ? '<span class="tag">agent</span> ' + (r.source === 'inferred' ? '<span class="tag inf">inferred</span>' : '<span class="src">(read in code)</span>') : r.source === 'inferred' ? '<span class="tag inf">inferred</span>' : '<span class="src">(rule)</span>'}</span><span class="why">${chips(r.evidence)}</span></li>`).join('') + '</ul>';
+  }
+  if (n.questions && n.questions.length) h += '<h3>Questions to ask</h3><ul>' + n.questions.map(q => `<li>${esc(q.text)} <span class="tag inf">inferred</span><br>${chips(q.evidence)}</li>`).join('') + '</ul>';
+  if (isGroup) h += '<h3>Blocks inside</h3><ul class="links">' + kids(n.id).map(k => `<li>${nodeLink(k.id)} <span class="src">${esc(statsLine(k))}</span></li>`).join('') + '</ul>';
+  h += '<h3>Connections</h3>' + connections(n);
+  if (!isGroup) h += `<h3>Files (${n.files.length})</h3>` + filesHtml(n);
+  return h;
+}
+
+function panel() {
+  const id = S.sel || S.open;
+  $('#panel').innerHTML = id ? nodePanel(byId.get(id)) : overview();
+  revcount();
+}
+
+function copyPrompt(n) {
+  const L = [`You are helping me review ${M.repo} PR #${M.pr}: "${M.title}"${M.url ? ' (' + M.url + ')' : ''}.`,
+    `Base ${M.base} <- head ${M.head} @ ${String(M.headSha).slice(0, 7)}.`, '',
+    `Block: ${n.label} (${KINDNAME[n.kind]}, ${n.status}).`,
+    `What changed: ${n.summary.text}${n.summary.source === 'inferred' ? ' [inferred]' : ''}`];
+  if (n.why) L.push(`Why: ${n.why.text} [source: ${n.why.source}]`);
+  if (n.risk.length) { L.push('Risk flags:'); n.risk.forEach(r => L.push(`- ${r.severity} ${r.type}: ${r.reason} (${r.evidence.join(', ')})${r.source === 'inferred' ? ' [inferred]' : ''}`)); }
+  L.push('Files:');
+  n.files.forEach(f => L.push(`- ${f.path} (${f.status}, +${f.additions} -${f.deletions})`));
+  L.push('', 'Questions:');
+  if (n.questions.length) n.questions.forEach(q => L.push('- ' + q.text));
+  else L.push('- What could break here, what is missing (tests, error handling, permissions), and is anything surprising?');
+  L.push('Answer briefly in plain English and cite file:line for every claim. Say "not sure" instead of guessing.', '', 'Diff hunks:', '```diff');
+  let budget = 450;
+  for (const f of n.files) {
+    if (budget <= 0) break;
+    L.push(`--- ${f.path}`);
+    for (const hk of f.hunks) { L.push(hk.header); for (const l of hk.lines) { if (budget-- <= 0) break; L.push(l); } }
+  }
+  if (budget <= 0) L.push('... (truncated; read the files above)');
+  L.push('```');
+  return L.join('\n');
+}
+async function copy(text, btn) {
+  let ok = false;
+  try { await navigator.clipboard.writeText(text); ok = true; } catch (e) { /* fall back */ }
+  if (!ok) {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    try { ok = document.execCommand('copy'); } catch (e) { /* manual */ }
+    ta.remove();
+  }
+  if (ok) { btn.textContent = 'Copied ✓'; setTimeout(() => { btn.textContent = 'Copy question for agent'; }, 1800); }
+  else btn.insertAdjacentHTML('afterend', `<textarea class="copy" readonly>${esc(text)}</textarea>`);
+}
+
+function jump(ev) {
+  const i = ev.lastIndexOf(':'), path = ev.slice(0, i), line = +ev.slice(i + 1);
+  const owner = fileOwner.get(path);
+  if (!owner) return;
+  if (S.sel !== owner) select(owner);
+  const det = [...document.querySelectorAll('details.file')].find(d => d.dataset.path === path);
+  if (!det) return;
+  det.open = true;
+  renderHunks(det);
+  const spans = [...det.querySelectorAll('span[data-ln]')];
+  const t = spans.find(s => +s.dataset.ln === line && !s.classList.contains('d')) || spans.find(s => +s.dataset.ln >= line) || spans[0] || det.querySelector('.hh');
+  if (t) { t.classList.add('hit'); t.scrollIntoView({block: 'center'}); setTimeout(() => t.classList.remove('hit'), 2600); }
+}
+
+function select(id) {
+  const n = byId.get(id);
+  if (!n) return;
+  if (n.kind === 'group') { S.open = id; S.sel = id; }
+  else { S.sel = id; S.open = n.parent || null; }
+  sync();
+}
+function up() {
+  if (S.sel && S.sel !== S.open) S.sel = S.open;
+  else if (S.open) { S.open = byId.get(S.open).parent || null; S.sel = S.open; }
+  sync();
+}
+function sync() {
+  document.body.classList.toggle('has-sel', !!(S.sel && S.sel !== S.open));
+  draw(); panel(); crumbs();
+  try {
+    const q = new URLSearchParams(location.search);
+    ['open', 'sel'].forEach(k => { if (S[k] && !(k === 'sel' && S.sel === S.open)) q.set(k, S[k]); else q.delete(k); });
+    history.replaceState(null, '', '?' + q.toString());
+  } catch (e) { /* file:// may refuse */ }
+}
+
+function setTheme(t) {
+  document.documentElement.dataset.theme = t;
+  try { localStorage.setItem('pr-visual-map:theme', t); } catch (e) { /* storage off */ }
+}
+
+svg.addEventListener('click', e => { const g = e.target.closest('.node'); g ? select(g.dataset.id) : (S.sel && S.sel !== S.open ? up() : null); });
+svg.addEventListener('keydown', e => {
+  if (e.key === 'Enter' || e.key === ' ') { const g = e.target.closest('.node'); if (g) { e.preventDefault(); select(g.dataset.id); } }
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') up(); });
+$('#panel').addEventListener('click', e => {
+  const t = e.target;
+  const go = t.closest('[data-go]');
+  if (go) { e.preventDefault(); select(go.dataset.go); return; }
+  const ev = t.closest('[data-ev]');
+  if (ev) { jump(ev.dataset.ev); return; }
+  if (t.id === 'close') { up(); return; }
+  if (t.id === 'opengroup') { select(S.sel); return; }
+  if (t.id === 'rev') { const id = S.sel; reviewed.has(id) ? reviewed.delete(id) : reviewed.add(id); save(); draw(); panel(); return; }
+  if (t.id === 'copy') { copy(copyPrompt(byId.get(S.sel)), t); }
+});
+$('#panel').addEventListener('toggle', e => { if (e.target.matches('details.file') && e.target.open) renderHunks(e.target); }, true);
+$('#crumbs').addEventListener('click', e => {
+  const b = e.target.closest('[data-crumb]');
+  if (b) { S.open = b.dataset.crumb || null; S.sel = S.open; sync(); }
+});
+$('#theme').addEventListener('click', () => setTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light'));
+let rt = 0;
+window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(draw, 120); });
+
+const q = new URLSearchParams(location.search);
+let theme = q.get('theme');
+if (!theme) { try { theme = localStorage.getItem('pr-visual-map:theme'); } catch (e) { /* storage off */ } }
+setTheme(theme || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'));
+header(); legend();
+if (q.get('open') && byId.has(q.get('open'))) { S.open = q.get('open'); S.sel = S.open; }
+if (q.get('sel') && byId.has(q.get('sel'))) { const n = byId.get(q.get('sel')); S.sel = n.id; if (n.kind === 'group') S.open = n.id; else if (n.parent) S.open = n.parent; }
+sync();
+if (q.get('diff') && S.sel) { const d = document.querySelector('details.file'); if (d) { d.open = true; renderHunks(d); } }
+})();
+</script>
+</body>
+</html>

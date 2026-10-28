@@ -1,0 +1,76 @@
+{
+  "name": "terraform",
+  "description": "Terraform / Bicep on Azure, AWS or GCP: IAM grants, app settings.",
+  "detect": [
+    "\\.(tf|tfvars|bicep)$"
+  ],
+  "flags": [
+    {
+      "type": "auth",
+      "re": "role_definition_name\\s*=\\s*\\\"([^\\\"]+)\\\"",
+      "on": "+",
+      "severity": "medium",
+      "escalate": {
+        "group": 1,
+        "re": "Owner|Contributor|Administrator|Admin\\b",
+        "to": "high"
+      },
+      "reason": "Azure role granted: {1}"
+    },
+    {
+      "type": "auth",
+      "re": "role_definition_id\\s*=",
+      "on": "+",
+      "severity": "medium",
+      "reason": "Azure role granted (by id): {line}"
+    },
+    {
+      "type": "auth",
+      "re": "role_definition_(name|id)\\s*=",
+      "on": "-",
+      "severity": "high",
+      "reason": "Azure role removed or changed: {line}"
+    },
+    {
+      "type": "auth",
+      "re": "azurerm_key_vault_access_policy|roleAssignments|\\baccess_policy\\s*\\{",
+      "on": "+-",
+      "severity": {
+        "+": "medium",
+        "-": "high"
+      },
+      "reason": {
+        "+": "Auth rule added: {line}",
+        "-": "Auth rule removed or changed: {line}"
+      }
+    },
+    {
+      "type": "auth",
+      "re": "\\b(aws_iam_[a-z_]+|google_[a-z_]+_iam_(member|binding|policy))\\b",
+      "on": "+-",
+      "severity": {
+        "+": "medium",
+        "-": "high"
+      },
+      "reason": {
+        "+": "IAM resource added: {1}",
+        "-": "IAM resource removed or changed: {1}"
+      }
+    },
+    {
+      "type": "auth",
+      "re": "\\\"Action\\\"\\s*:\\s*\\\"\\*\\\"|actions\\s*=\\s*\\[\\s*\\\"\\*\\\"\\s*\\]|\\\"Resource\\\"\\s*:\\s*\\\"\\*\\\"",
+      "on": "+",
+      "severity": "high",
+      "reason": "Wildcard IAM permission: {line}"
+    }
+  ],
+  "config": {
+    "setters": [
+      {
+        "files": "\\.(tf|tfvars|bicep)$",
+        "re": "^\\s*\\\"?([A-Za-z][A-Za-z0-9_]*?)__([A-Za-z0-9_]+)\\\"?\\s*="
+      }
+    ]
+  }
+}

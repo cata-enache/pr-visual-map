@@ -1,0 +1,106 @@
+{
+  "name": "dotnet",
+  "description": ".NET / ASP.NET Core: controllers, minimal APIs, Functions, EF, options binding.",
+  "detect": [
+    "(^|/)[^/]+\\.(csproj|fsproj|vbproj|sln)$"
+  ],
+  "classify": [
+    {
+      "order": 22,
+      "kind": "test",
+      "path": "Tests?\\.(cs|fs|vb)$"
+    },
+    {
+      "order": 50,
+      "kind": "config",
+      "ext": [
+        ".csproj",
+        ".fsproj",
+        ".vbproj",
+        ".props",
+        ".targets",
+        ".sln"
+      ]
+    },
+    {
+      "order": 50,
+      "kind": "config",
+      "name": "(?i)^(appsettings[^/]*\\.json|local\\.settings\\.json|launchsettings\\.json|host\\.json|global\\.json|nuget\\.config|startup\\.cs|program\\.cs|directory\\.build\\..*|directory\\.packages\\.props)$"
+    },
+    {
+      "order": 60,
+      "kind": "endpoint",
+      "path": "Controller\\.cs$|Endpoints?\\.cs$|Function\\.cs$|Hub\\.cs$"
+    },
+    {
+      "order": 82,
+      "kind": "entity",
+      "code": true,
+      "path": "(Entity|Aggregate|Repository|DbContext|GrainState)\\.cs$"
+    },
+    {
+      "order": 84,
+      "kind": "dto",
+      "code": true,
+      "path": "(Dto|DTO|Request|Response|Contract|Event|Message|ViewModel)s?\\.cs$"
+    }
+  ],
+  "flags": [
+    {
+      "type": "auth",
+      "re": "\\[(Authorize|AllowAnonymous|RequiresPermission\\w*|RequireRole\\w*)\\b|RequireAuthorization\\(|\\.AllowAnonymous\\(|AddAuthorization\\b|AddPolicy\\(",
+      "on": "+-",
+      "severity": {
+        "+": "medium",
+        "-": "high"
+      },
+      "reason": {
+        "+": "Auth rule added: {line}",
+        "-": "Auth rule removed or changed: {line}"
+      }
+    },
+    {
+      "type": "public-api",
+      "re": "\\[(Http(Get|Post|Put|Delete|Patch)|Route)\\b|\\bMap(Get|Post|Put|Delete|Patch|Methods)\\(|\\[Function\\(|HttpTrigger",
+      "on": "+-",
+      "severity": {
+        "+": "medium",
+        "-": "high"
+      },
+      "skipGenerated": true,
+      "reason": {
+        "+": "New HTTP route: {line}",
+        "-": "HTTP route removed or changed: {line}"
+      }
+    },
+    {
+      "type": "config",
+      "re": "<PackageReference\\s+Include=\\\"([^\\\"]+)\\\"(?:\\s+Version=\\\"([^\\\"]+)\\\")?",
+      "on": "+-",
+      "severity": "medium",
+      "files": "\\.(csproj|fsproj|vbproj|props|targets)$",
+      "reason": "Package {verb}: {1} {2}"
+    }
+  ],
+  "routes": [
+    {
+      "families": [
+        "dotnet"
+      ],
+      "classPrefix": "\\[\\w*Route\\(\\s*\\\"([^\\\"]*)\\\"\\s*\\)\\][\\s\\S]{0,400}?\\bclass\\s+(\\w+)",
+      "method": "\\[(?:Route|Http(?:Get|Post|Put|Delete|Patch))\\(\\s*(?:template:\\s*)?\\\"([^\\\"]*)\\\"",
+      "controllerToken": "[controller]",
+      "controllerSuffix": "Controller"
+    }
+  ],
+  "config": {
+    "readers": [
+      {
+        "families": [
+          "dotnet"
+        ],
+        "re": "GetSection\\(\\s*\\\"([A-Za-z][\\w]*)|Configure<(\\w+)>|\\bclass\\s+(\\w+)"
+      }
+    ]
+  }
+}

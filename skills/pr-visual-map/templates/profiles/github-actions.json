@@ -1,0 +1,33 @@
+{
+  "name": "github-actions",
+  "description": "GitHub Actions workflows: triggers, permissions, secrets.",
+  "detect": [
+    "^\\.github/workflows/[^/]+\\.ya?ml$"
+  ],
+  "flags": [
+    {
+      "type": "auth",
+      "re": "\\bpull_request_target\\b",
+      "on": "+",
+      "severity": "high",
+      "files": "^\\.github/workflows/",
+      "reason": "Workflow runs on pull_request_target (fork code with repo secrets)"
+    },
+    {
+      "type": "auth",
+      "re": "^\\s*permissions\\s*:|^\\s*(contents|id-token|packages|actions|deployments|pull-requests)\\s*:\\s*write",
+      "on": "+-",
+      "severity": "medium",
+      "files": "^\\.github/workflows/",
+      "reason": "Workflow permissions changed: {line}"
+    },
+    {
+      "type": "secret",
+      "re": "\\$\\{\\{\\s*secrets\\.([A-Za-z0-9_]+)",
+      "on": "+",
+      "severity": "medium",
+      "files": "^\\.github/workflows/",
+      "reason": "Workflow uses secret {1}"
+    }
+  ]
+}

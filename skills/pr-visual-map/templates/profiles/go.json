@@ -1,0 +1,64 @@
+{
+  "name": "go",
+  "description": "Go: net/http, chi, gin, echo.",
+  "detect": [
+    "(^|/)go\\.mod$"
+  ],
+  "classify": [
+    {
+      "order": 50,
+      "kind": "config",
+      "name": "^go\\.mod$"
+    },
+    {
+      "order": 60,
+      "kind": "endpoint",
+      "path": "(^|/)(handlers?|api|server|routes)/[^/]+\\.go$|_handler\\.go$"
+    }
+  ],
+  "flags": [
+    {
+      "type": "auth",
+      "re": "\\b(RequireAuth|AuthMiddleware|jwtauth|casbin|Authorize)\\w*\\(",
+      "on": "+-",
+      "severity": {
+        "+": "medium",
+        "-": "high"
+      },
+      "reason": {
+        "+": "Auth rule added: {line}",
+        "-": "Auth rule removed or changed: {line}"
+      }
+    },
+    {
+      "type": "public-api",
+      "re": "\\.(HandleFunc|Handle|GET|POST|PUT|DELETE|PATCH|Get|Post|Put|Delete|Patch)\\(\\s*\\\"",
+      "on": "+-",
+      "severity": {
+        "+": "medium",
+        "-": "high"
+      },
+      "skipGenerated": true,
+      "reason": {
+        "+": "New HTTP route: {line}",
+        "-": "HTTP route removed or changed: {line}"
+      }
+    },
+    {
+      "type": "config",
+      "re": "^\\s*([\\w./-]+\\.[\\w./-]+)\\s+(v[\\w.+-]+)",
+      "on": "+-",
+      "severity": "medium",
+      "files": "(^|/)go\\.mod$",
+      "reason": "Package {verb}: {1} {2}"
+    }
+  ],
+  "routes": [
+    {
+      "families": [
+        "go"
+      ],
+      "method": "\\.(?:HandleFunc|Handle|GET|POST|PUT|DELETE|PATCH|Get|Post|Put|Delete|Patch)\\(\\s*\\\"([^\\\"]+)\\\""
+    }
+  ]
+}

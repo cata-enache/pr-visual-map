@@ -1,0 +1,87 @@
+{
+  "name": "python",
+  "description": "Python: Django, Flask, FastAPI.",
+  "detect": [
+    "(^|/)(pyproject\\.toml|setup\\.py|setup\\.cfg|requirements[^/]*\\.txt|Pipfile)$"
+  ],
+  "classify": [
+    {
+      "order": 30,
+      "kind": "migration",
+      "path": "(^|/)alembic/versions/"
+    },
+    {
+      "order": 50,
+      "kind": "config",
+      "name": "(?i)^(requirements[^/]*\\.txt|pyproject\\.toml|setup\\.cfg|pipfile|settings\\.py)$"
+    },
+    {
+      "order": 60,
+      "kind": "endpoint",
+      "path": "(^|/)(views|api|urls)\\.py$|(^|/)(routers|views|api)/[^/]+\\.py$"
+    },
+    {
+      "order": 82,
+      "kind": "entity",
+      "code": true,
+      "path": "(^|/)models\\.py$"
+    },
+    {
+      "order": 84,
+      "kind": "dto",
+      "code": true,
+      "path": "(^|/)(schemas|serializers)(\\.py$|/)"
+    }
+  ],
+  "flags": [
+    {
+      "type": "auth",
+      "re": "@login_required|permission_classes|@permission_required|Depends\\(\\s*get_current_\\w+|@requires_auth|IsAuthenticated",
+      "on": "+-",
+      "severity": {
+        "+": "medium",
+        "-": "high"
+      },
+      "reason": {
+        "+": "Auth rule added: {line}",
+        "-": "Auth rule removed or changed: {line}"
+      }
+    },
+    {
+      "type": "public-api",
+      "re": "@(app|router|bp|api|blueprint)\\.(get|post|put|delete|patch|route)\\(|\\b(re_)?path\\(\\s*r?['\\\"]",
+      "on": "+-",
+      "severity": {
+        "+": "medium",
+        "-": "high"
+      },
+      "skipGenerated": true,
+      "reason": {
+        "+": "New HTTP route: {line}",
+        "-": "HTTP route removed or changed: {line}"
+      }
+    },
+    {
+      "type": "config",
+      "re": "^\\s*([A-Za-z0-9_.\\-\\[\\]]+)\\s*(?:[=<>~!]=|>|<)\\s*([\\w.*]+)",
+      "on": "+-",
+      "severity": "medium",
+      "files": "(^|/)requirements[^/]*\\.txt$",
+      "reason": "Package {verb}: {1} {2}"
+    }
+  ],
+  "routes": [
+    {
+      "families": [
+        "py"
+      ],
+      "method": "@(?:app|router|bp|api|blueprint)\\.(?:get|post|put|delete|patch|route)\\(\\s*['\\\"]([^'\\\"]+)['\\\"]"
+    }
+  ],
+  "packageNames": [
+    {
+      "files": "(^|/)pyproject\\.toml$",
+      "re": "^\\s*name\\s*=\\s*\\\"([^\\\"]+)\\\""
+    }
+  ]
+}

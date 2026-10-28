@@ -1,0 +1,61 @@
+{
+  "name": "example-org",
+  "description": "Example overlay: house rules and an internal knowledge base. Copy to repos/<owner>.json (public) or to ~/.config/pr-visual-map/profiles/repos/<owner>.json (private) and adapt.",
+  "flags": [
+    {
+      "type": "auth",
+      "re": "\\[RequiresScope\\w*\\(",
+      "on": "+-",
+      "severity": {
+        "+": "medium",
+        "-": "high"
+      },
+      "reason": {
+        "+": "Auth rule added: {line}",
+        "-": "Auth rule removed or changed: {line}"
+      }
+    },
+    {
+      "type": "auth",
+      "re": "\\bTenantResolutionMiddleware\\b",
+      "on": "+-",
+      "severity": "high",
+      "codeOnly": true,
+      "reason": "Tenant resolution pipeline touched: {line}"
+    }
+  ],
+  "tickets": [
+    {
+      "re": "\\b(SHOP-\\d+)\\b",
+      "url": "https://example.atlassian.net/browse/{id}"
+    }
+  ],
+  "context": {
+    "sources": [
+      {
+        "name": "Team knowledge base",
+        "type": "kb",
+        "path": "~/work/team-kb",
+        "readFirst": [
+          "AGENTS.md"
+        ],
+        "repoFolders": [
+          "repos"
+        ],
+        "ticketFolders": [
+          "tickets",
+          "drafts"
+        ],
+        "search": "grep folder names for the ticket id; search notes for class names.",
+        "rules": [
+          "Read the repo's folder first (current facts), then the ticket folder (decisions, why).",
+          "When the knowledge base and the code disagree, the code wins: say so in the readme notes."
+        ]
+      }
+    ],
+    "output": {
+      "whenTicketFolder": "drafts",
+      "path": "{source}/drafts/{folder}/visuals/pr-map-{repoName}-{pr}"
+    }
+  }
+}

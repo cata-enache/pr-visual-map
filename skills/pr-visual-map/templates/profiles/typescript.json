@@ -1,0 +1,105 @@
+{
+  "name": "typescript",
+  "description": "TypeScript / JavaScript: Angular, React, Vue, Node (Express, NestJS).",
+  "detect": [
+    "(^|/)(package\\.json|tsconfig[^/]*\\.json)$"
+  ],
+  "classify": [
+    {
+      "order": 50,
+      "kind": "config",
+      "name": "(?i)^(package\\.json|tsconfig[^/]*\\.json|angular\\.json|project\\.json|\\.eslintrc.*|eslint\\.config\\..*|\\.prettierrc.*|\\.npmrc|environment[^/]*\\.ts|karma\\.conf\\.js|jest\\.config\\..*|vite\\.config\\..*|webpack\\.config\\..*)$"
+    },
+    {
+      "order": 60,
+      "kind": "endpoint",
+      "path": "Controller\\.(ts|js)$|Endpoints?\\.(ts|js)$|\\.controller\\.ts$|\\.routes?\\.ts$"
+    },
+    {
+      "order": 70,
+      "kind": "ui",
+      "path": "\\.(component|page|directive|pipe|module)\\.ts$"
+    },
+    {
+      "order": 84,
+      "kind": "dto",
+      "code": true,
+      "ext": [
+        ".ts",
+        ".tsx",
+        ".js",
+        ".jsx",
+        ".mjs",
+        ".cjs",
+        ".vue"
+      ],
+      "path": "(?i)(^|/)(models?|dtos?|contracts|types|interfaces)/|\\.(model|dto|types?|interface)\\.ts$|\\.d\\.ts$"
+    }
+  ],
+  "flags": [
+    {
+      "type": "auth",
+      "re": "\\bcanActivate\\b|AuthGuard|@UseGuards\\(|@Roles\\(",
+      "on": "+-",
+      "severity": {
+        "+": "medium",
+        "-": "high"
+      },
+      "reason": {
+        "+": "Auth rule added: {line}",
+        "-": "Auth rule removed or changed: {line}"
+      }
+    },
+    {
+      "type": "public-api",
+      "re": "\\b(app|router)\\.(get|post|put|delete|patch)\\(\\s*['\\\"`/]|@(Get|Post|Put|Delete|Patch)\\(\\s*['\\\"]",
+      "on": "+-",
+      "severity": {
+        "+": "medium",
+        "-": "high"
+      },
+      "skipGenerated": true,
+      "reason": {
+        "+": "New HTTP route: {line}",
+        "-": "HTTP route removed or changed: {line}"
+      }
+    },
+    {
+      "type": "config",
+      "re": "^\\s*\\\"(@?[\\w./-]+)\\\"\\s*:\\s*\\\"([\\^~]?\\d[^\\\"]*)\\\"",
+      "on": "+-",
+      "severity": "medium",
+      "files": "(^|/)package\\.json$",
+      "reason": "Package {verb}: {1} {2}",
+      "ignore": {
+        "group": 1,
+        "values": [
+          "version",
+          "node",
+          "npm",
+          "name"
+        ]
+      }
+    }
+  ],
+  "routes": [
+    {
+      "families": [
+        "js"
+      ],
+      "classPrefix": "@Controller\\(\\s*['\\\"]([^'\\\"]*)['\\\"]\\s*\\)[\\s\\S]{0,400}?\\bclass\\s+(\\w+)",
+      "method": "\\b(?:app|router)\\.(?:get|post|put|delete|patch)\\(\\s*['\\\"`]([^'\\\"`]+)|@(?:Get|Post|Put|Delete|Patch)\\(\\s*['\\\"]([^'\\\"]*)['\\\"]"
+    }
+  ],
+  "clientUrls": {
+    "families": [
+      "js"
+    ]
+  },
+  "packageNames": [
+    {
+      "files": "(^|/)package\\.json$",
+      "re": "^\\s*\\\"name\\\"\\s*:\\s*\\\"([^\\\"]+)\\\""
+    }
+  ]
+}

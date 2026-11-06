@@ -18,7 +18,7 @@ matters. Every block points to files and lines; anything an agent concluded rath
 | Layer | What | Where |
 |---|---|---|
 | Generator | Deterministic, standard-library Python. Diff → blocks, links, blast radius, rule flags, self-checks, page. | `skills/pr-visual-map/templates/make_map.py` |
-| Rule packs | All stack knowledge as JSON, picked by what the repo contains: generic, .NET, TypeScript, Python, Go, JVM, Terraform, GitHub Actions. | `skills/pr-visual-map/templates/profiles/` |
+| Rule packs | All stack knowledge as JSON, picked by what the repo contains: generic, .NET, Orleans, TypeScript, Python, Go, JVM, Terraform, GitHub Actions. | `skills/pr-visual-map/templates/profiles/` |
 | Agent part | The agent reads `agent-brief.md`, writes `enrich.json` (names, summaries, why, risks, questions, review path). The generator checks it (A0–A10) before publishing. | `skills/pr-visual-map/SKILL.md` |
 
 ## Install

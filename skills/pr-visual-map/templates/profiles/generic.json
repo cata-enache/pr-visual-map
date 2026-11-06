@@ -334,7 +334,7 @@
     },
     {
       "type": "secret",
-      "re": "GetSecrets?(Async)?\\b|ListSecrets|listSecrets|ListKeys|listKeys|PrimaryKey|SecondaryKey|ClientSecret|SecretClient|SasToken|AccountKey",
+      "re": "GetSecrets?(Async)?\\b|ListSecrets|listSecrets|ListKeys|listKeys|(?<!Get)PrimaryKey|SecondaryKey|ClientSecret|SecretClient|SasToken|AccountKey",
       "on": "+",
       "severity": "medium",
       "codeOnly": true,

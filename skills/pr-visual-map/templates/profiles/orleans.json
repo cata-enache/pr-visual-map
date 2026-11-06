@@ -1,0 +1,150 @@
+{
+  "name": "orleans",
+  "description": "Microsoft Orleans: grain interfaces (the public contract), versions, serializer ids and aliases, persisted grain state, interleaving, timers and streams, hosting providers.",
+  "detect": [
+    "(^|/)[^/]*Grain(State)?\\.cs$",
+    "(^|/)[^/]*\\.Grains?(\\.[^/]+)?/"
+  ],
+  "classify": [
+    {
+      "order": 60,
+      "kind": "endpoint",
+      "code": true,
+      "name": "^I[A-Z]\\w*Grain\\.cs$"
+    }
+  ],
+  "flags": [
+    {
+      "type": "orleans-contract",
+      "re": "^\\s*(?:\\[[^\\]]*\\]\\s*)*(?:Task|ValueTask|IAsyncEnumerable|void)\\b[^(]*?\\b(\\w+)\\s*\\(",
+      "on": "+-",
+      "files": "(^|/)I[A-Z]\\w*Grain\\.cs$",
+      "codeOnly": true,
+      "severity": {
+        "+": "medium",
+        "-": "high"
+      },
+      "reason": {
+        "+": "Grain method added or changed: {1}",
+        "-": "Grain method removed or changed: {1}. Callers on an older revision still use it during a deploy"
+      }
+    },
+    {
+      "type": "orleans-contract",
+      "re": "\\[Version\\(\\s*(\\d+)\\s*\\)\\]",
+      "on": "+-",
+      "codeOnly": true,
+      "severity": "medium",
+      "reason": {
+        "+": "Grain interface version set to {1}",
+        "-": "Grain interface version {1} removed or changed"
+      }
+    },
+    {
+      "type": "orleans-contract",
+      "re": "\\[(Alias|GrainType|GrainInterfaceType)\\(\\s*\\\"([^\\\"]*)\\\"",
+      "on": "+-",
+      "codeOnly": true,
+      "severity": {
+        "+": "low",
+        "-": "high"
+      },
+      "reason": {
+        "+": "{1} \"{2}\" added",
+        "-": "{1} \"{2}\" removed or changed: it is a wire or storage identity"
+      }
+    },
+    {
+      "type": "orleans-contract",
+      "re": "\\[(?:\\w+:\\s*)?(Id\\(\\s*\\d+\\s*\\))",
+      "on": "-",
+      "codeOnly": true,
+      "severity": "medium",
+      "reason": "Serializer field id removed or changed: {1}. An id must never be reused"
+    },
+    {
+      "type": "orleans-contract",
+      "re": "\\[GenerateSerializer\\b",
+      "on": "-",
+      "codeOnly": true,
+      "severity": "medium",
+      "reason": "[GenerateSerializer] removed or changed: the type may no longer be serialized"
+    },
+    {
+      "type": "orleans-state",
+      "re": "\\[PersistentState\\(",
+      "on": "+-",
+      "codeOnly": true,
+      "severity": {
+        "+": "medium",
+        "-": "high"
+      },
+      "reason": {
+        "+": "Grain state declared: {line}",
+        "-": "Grain state declaration removed or changed: the state name and provider pick the stored row"
+      }
+    },
+    {
+      "type": "orleans-state",
+      "re": "\\b(WriteStateAsync|ClearStateAsync|ReadStateAsync)\\s*\\(",
+      "on": "+-",
+      "codeOnly": true,
+      "severity": "medium",
+      "reason": "Grain state access {verb}: {1}"
+    },
+    {
+      "type": "orleans-state",
+      "re": "\\b(\\w*GrainStorageSerializer\\w*|AddNewtonsoftJson\\w*|UseNewtonsoftJson\\w*)\\b",
+      "on": "+-",
+      "codeOnly": true,
+      "severity": "high",
+      "reason": "Grain storage serializer setup {verb}: {1}. Stored rows may stop reading"
+    },
+    {
+      "type": "orleans-scheduling",
+      "re": "\\[(Reentrant|AlwaysInterleave|MayInterleave|ReadOnly|OneWay|Immutable|StatelessWorker|CollectionAgeLimit|\\w*Placement)\\b",
+      "on": "+-",
+      "codeOnly": true,
+      "severity": "medium",
+      "escalate": {
+        "group": 1,
+        "re": "^(Reentrant|AlwaysInterleave|MayInterleave)$",
+        "to": "high"
+      },
+      "reason": "Scheduling or placement attribute {verb}: [{1}]"
+    },
+    {
+      "type": "orleans-runtime",
+      "re": "\\b(RegisterGrainTimer|RegisterTimer|RegisterOrUpdateReminder|RegisterReminder|UnregisterReminder|ReceiveReminder|IRemindable|ImplicitStreamSubscription|GetStreamProvider|IAsyncObserver|IGrainObserver|ScheduleJobAsync|IDurableJobHandler|StreamId\\.Create)\\b",
+      "on": "+-",
+      "codeOnly": true,
+      "severity": "medium",
+      "reason": "Timer, reminder or stream code {verb}: {1}"
+    },
+    {
+      "type": "orleans-hosting",
+      "re": "\\b(AddMemoryGrainStorage\\w*|AddMemoryStreams|UseLocalhostClustering|UseInMemoryReminderService)\\b",
+      "on": "+",
+      "files": "^(?!.*(?i:sandbox|samples?|demo|example|playground))",
+      "codeOnly": true,
+      "severity": "high",
+      "reason": "In-memory Orleans provider added: {1}. Data is lost on restart"
+    },
+    {
+      "type": "orleans-hosting",
+      "re": "\\b(UseOrleans(?:Client)?|AddOrleans(?:Client)?|Use(?!Localhost)\\w*Clustering|Add(?!Memory)\\w*GrainStorage\\w*|Add(?!Memory)\\w*Streams|AddPersistentStreams|Use(?!InMemory)\\w*ReminderService|AddReminders|AddBroadcastChannel|GrainVersioningOptions|AddGrainService)\\b",
+      "on": "+-",
+      "codeOnly": true,
+      "severity": "medium",
+      "reason": "Orleans hosting or provider setup {verb}: {1}"
+    },
+    {
+      "type": "orleans-package",
+      "re": "<Package(?:Reference|Version)\\s+(?:Include|Update)=\\\"(Microsoft\\.Orleans\\.[\\w.]+|Orleans\\.[\\w.]+)\\\"(?:\\s+Version=\\\"([^\\\"]+)\\\")?",
+      "on": "+-",
+      "files": "\\.(csproj|props|targets)$",
+      "severity": "medium",
+      "reason": "Orleans package {verb}: {1} {2}. Re-check serializer, storage and clustering defaults"
+    }
+  ]
+}
